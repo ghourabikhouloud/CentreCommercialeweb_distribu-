@@ -1,0 +1,162 @@
+version: "3.8"
+
+services:
+  DiscoveryServer:
+    container_name: DiscoveryServer
+    build: .\DiscoveryServer
+    ports:
+      - "8761:8761"
+    hostname: DiscoveryServer
+    image: "eureka"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://DiscoveryServer:8761/eureka/
+
+  Produit:
+    container_name: Produit
+    build: .\Produit
+    ports:
+      - "8104:8130"
+    image: "produit"
+    hostname: Produit
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db_mysql:3306/Produit
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://DiscoveryServer:8761/eureka/
+    depends_on:
+      - DiscoveryServer
+      - docker-mysql_1
+
+  docker-mysql_1:
+    image: "mysql:5.6"
+    container_name: db_mysql
+    environment:
+    - MYSQL_ROOT_PASSWORD=
+    - MYSQL_DATABASE=Produit
+    - MYSQL_PASSWORD=
+    - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    ports:
+    - "3308:3306"
+
+  CentreCommercial:
+    container_name: CentreCommercial
+    build: .\CentreCommercial
+    ports:
+      - "8102:8102"
+    image: "centre"
+    hostname: CentreCommercial
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db2_mysql:3306/Centree
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://DiscoveryServer:8761/eureka/
+    depends_on:
+      - DiscoveryServer
+      - docker-mysql_2
+
+
+  docker-mysql_2:
+    image: "mysql:5.6"
+    container_name: db2_mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_DATABASE=Centree
+      - MYSQL_PASSWORD=
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    ports:
+      - "3310:3306"
+
+  Boutique:
+    container_name: Boutique
+    build: .\Boutique
+    ports:
+      - "8101:8101"
+    image: "boutique"
+    hostname: Boutique
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db3_mysql:3306/Boutiquee
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://DiscoveryServer:8761/eureka/
+    depends_on:
+      - DiscoveryServer
+      - docker-mysql_3
+
+  docker-mysql_3:
+    image: "mysql:5.6"
+    container_name: db3_mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_PASSWORD=
+      - MYSQL_DATABASE=Boutiquee
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    ports:
+      - "3307:3306"
+
+  Gateway:
+    image: "gateway"
+    container_name: Gateway
+    build: .\GateWay
+    hostname: Gateway
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://DiscoveryServer:8761/eureka/
+    ports:
+      - "8103:8103"
+    depends_on:
+      - DiscoveryServer
+
+  Authentification:
+    container_name: Authentification
+    build: .\Authentification1
+    ports:
+      - "8081:8081"
+    image: "authentification"
+    hostname: Auth
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db4_mysql:3306/Auth?useUnicode=true&useJDBCCompliantTimezoneShift=true&createDatabaseIfNotExist=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://DiscoveryServer:8761/eureka/
+    depends_on:
+      - DiscoveryServer
+      - docker-mysql_4
+
+  docker-mysql_4:
+    image: "mysql:5.6"
+    container_name: db4_mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_PASSWORD=
+      - MYSQL_DATABASE=Auth
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    ports:
+      - "3309:3306"
+
+
+  employenode:
+    build: .\employenode
+    ports:
+      - "4000:4000"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017/employe # Update this line
+      - EUREKA_DEFAULTZONE=DiscoveryServer
+      - EUREKA_PORT=8761
+      - HOSTNAME=employenode
+      - PORT=4000
+    depends_on:
+      - DiscoveryServer
+      - mongodb
+
+  mongodb:
+    image: "mongo:latest"
+    ports:
+      - "27018:27017"
+    volumes:
+    - mongodb_data:/data/db
+volumes:
+  mongodb_data:
+    driver: local
